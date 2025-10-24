@@ -1,0 +1,40 @@
+services:
+  honeypot:
+    build: .
+    container_name: php-honeypot
+    volumes:
+      - ./honeypot_logs:/var/www/html/honeypot_logs:rw
+      - ./honeypot_host_logs/honeypot.log:/var/log/honeypot.log:rw
+    restart: unless-stopped
+    networks:
+      - hpnet
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    pids_limit: 128
+    init: true
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: nginx-honeypot
+    depends_on:
+      - honeypot
+    ports:
+      - "127.0.0.1:8080:80"
+    volumes:
+      - ./nginx/honeypot.conf:/etc/nginx/conf.d/honeypot.conf:ro
+      - ./nginx/logs:/var/log/nginx
+    restart: unless-stopped
+    networks:
+      - hpnet
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    pids_limit: 128
+    init: true
+
+networks:
+  hpnet:
+    driver: bridge
+    internal: true
