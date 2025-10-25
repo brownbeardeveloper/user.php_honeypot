@@ -1,0 +1,8 @@
+/Users/hello/Documents/honeypot/nginx/logs/honeypot_access.log {
+    daily
+    rotate 14
+    compress
+    missingok
+    notifempty
+    copytruncate
+}

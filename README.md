@@ -27,3 +27,31 @@ curl -v http://127.0.0.1:8080/user.php
 - Consider log rotation and Fail2Ban on the honeypot log or nginx access log.
 
 
+### Fail2Ban (ban any POST in honeypot access log)
+Simple config setup
+
+Adjust `logpath` to your host path, e.g. `./nginx/logs/honeypot_access.log` or `/var/log/nginx/honeypot_access.log`.
+
+```bash
+sudo cp nginx/nginx-honeypot-post.conf /etc/fail2ban/filter.d/nginx-honeypot-post.conf
+sudo cp nginx/logs/nginx-honeypot-post.local /etc/fail2ban/jail.d/nginx-honeypot-post.local
+
+sudo systemctl restart fail2ban
+sudo fail2ban-client status nginx-honeypot-post
+```
+
+Allowlist (optional): add `ignoreip` in the jail file.
+
+```conf
+[nginx-honeypot-post]
+ignoreip = 127.0.0.1/8 ::1 203.0.113.10 198.51.100.0/24
+```
+
+
+### Logrotate (honeypot access log)
+Copy the provided rule and test. Adjust the path inside the file if your log lives elsewhere.
+
+```bash
+sudo cp nginx/logrotate-honeypot /etc/logrotate.d/honeypot
+sudo logrotate -d /etc/logrotate.d/honeypot
+```

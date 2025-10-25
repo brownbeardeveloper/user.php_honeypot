@@ -71,6 +71,7 @@ if ($ip !== null) {
 
 // Return a simple fake login form (no auth)
 http_response_code(200);
+$showError = (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST');
 ?>
 <!doctype html>
 <html lang="sv">
@@ -85,8 +86,10 @@ http_response_code(200);
   <form method="post" action="/user.php">
     <label>Username: <input name="username" type="text" autocomplete="off"></label>
     <label>Password: <input name="password" type="password" autocomplete="off"></label>
+    <?php if ($showError): ?>
+    <p style="color:gray">Invalid email or password.</p>
+    <?php endif; ?>
     <button type="submit">Login</button>
   </form>
-  <p style="color:gray">Error: We could not login. Try again.</p>
 </body>
 </html>
