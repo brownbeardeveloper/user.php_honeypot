@@ -1,0 +1,8 @@
+[nginx-honeypot-post]
+enabled  = true
+filter   = nginx-honeypot-post
+logpath  = /path/to/honeypot_access.log
+maxretry = 1
+findtime = 3600
+bantime  = 604800
+action   = iptables-multiport[name=nginx-honeypot-post, port="80,8080", protocol=tcp]
