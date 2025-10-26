@@ -2,6 +2,7 @@ services:
   honeypot:
     build: .
     container_name: php-honeypot
+    user: "111:112" # server user and group id
     restart: unless-stopped
     networks:
       - hpnet
@@ -11,6 +12,8 @@ services:
       - ALL
     pids_limit: 128
     init: true
+    volumes:
+      - /srv/honeypot-v1/service/honeypot_host_logs/honeypot.log:/var/log/honeypot.log:rw
   nginx:
     image: nginx:1.27-alpine
     container_name: nginx-honeypot
