@@ -9,14 +9,34 @@ Minimal web honeypot that logs IP/time/URI in a Fail2Ban-friendly format. Runs P
 - `nginx/honeypot.conf` — proxies only `/user.php`; basic hardening and rate limit
 
 ### Quick start
+
+# IMPORTANT: Adjust UID/GID for container user
+Before building, ensure the Docker services run under the same user and group IDs as the host account `honeypot-v1`.
+This prevents permission issues when mounting volumes and ensures logs are written securely.
+
+To check your host IDs:
+id honeypot-v1
+
+Then edit `docker-compose.yml`:
+user: "111:111"   # replace with actual UID:GID from the command above
+
+
 ```bash
-mkdir -p honeypot_logs honeypot_host_logs nginx/logs
-sudo touch honeypot_host_logs/honeypot.log
-sudo chown root:adm honeypot_host_logs/honeypot.log
-sudo chmod 0640 honeypot_host_logs/honeypot.log
+# Ensure correct directories (host side)
+sudo mkdir -p /srv/honeypot-v1/logs/php
+sudo mkdir -p /srv/honeypot-v1/logs/nginx
+sudo mkdir -p /srv/honeypot-v1/service/nginx/logs
+sudo mkdir -p /srv/honeypot-v1/service/honeypot_host_logs
 
-docker compose up -d --build
+# Create honeypot host log file
+sudo touch /srv/honeypot-v1/service/honeypot_host_logs/honeypot.log
+sudo chown honeypot-v1:honeypot-v1 /srv/honeypot-v1/service/honeypot_host_logs/honeypot.log
+sudo chmod 0640 /srv/honeypot-v1/service/honeypot_host_logs/honeypot.log
 
+# Build and run everything as honeypot user
+sudo -u honeypot-v1 docker compose -f /srv/honeypot-v1/service/docker-compose.yml up -d --build
+
+# Test endpoint
 curl -v http://127.0.0.1:8080/user.php
 ```
 

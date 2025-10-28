@@ -1,3 +1,2 @@
-honeypot_host_logs/
-honeypot_logs
+nginx/honeypot_access.log
 nginx/logs/
