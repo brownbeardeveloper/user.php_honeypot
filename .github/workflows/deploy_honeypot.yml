@@ -2,23 +2,44 @@ name: Deploy Honeypot
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    name: Build & Deploy to Hetzner
+    runs-on: self-hosted
 
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Deploy to Hetzner
-        env:
-          SERVER_IP: ${{ secrets.SERVER_IP }}
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Environment info
         run: |
-          mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 deploy@$SERVER_IP \
-            "sudo -u honeypot-v1 /srv/honeypot-v1/scripts/deploy_honeypot.sh"
+          echo "Runner: $(hostname)"
+          docker --version
+          docker compose version || true
+          systemctl --version | head -1
+
+      - name: Build image
+        run: |
+          docker build -t honeypot:latest .
+
+      - name: Sync files
+        run: |
+          sudo rsync -a --delete \
+            ./ /srv/honeypot/service/ \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude 'README.md'
+          sudo chown -R honeypot:honeypot /srv/honeypot/service
+
+      - name: Restart service
+        run: |
+          sudo systemctl restart honeypot
+          sleep 3
+          sudo systemctl status honeypot --no-pager -l || true
+
+      - name: Verify containers
+        run: |
+          sudo docker ps
