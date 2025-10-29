@@ -20,17 +20,19 @@ jobs:
       - name: Environment info
         run: |
           echo "Runner: $(hostname)"
-          echo "HOME: $HOME"
           docker --version
           docker compose version || true
           systemctl --version | head -1
 
-      - name: Build image
-        run: docker build -t honeypot:latest .
-
-      - name: Sync files
+      - name: Ensure log path exists
         run: |
-          rsync -a --delete-after --ignore-errors \
+          mkdir -p /srv/honeypot/service/honeypot_host_logs
+          touch /srv/honeypot/service/honeypot_host_logs/honeypot.log
+          chown -R honeypot:honeypot /srv/honeypot/service/honeypot_host_logs
+
+      - name: Sync updated service files
+        run: |
+          rsync -a --delete \
             ./ /srv/honeypot/service/ \
             --exclude '.git' \
             --exclude '.github' \
@@ -44,4 +46,6 @@ jobs:
           systemctl status honeypot --no-pager -l || true
 
       - name: Verify running containers
-        run: docker ps
+        run: |
+          echo "Active containers:"
+          docker ps
