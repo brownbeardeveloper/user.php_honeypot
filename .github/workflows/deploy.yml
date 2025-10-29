@@ -30,7 +30,7 @@ jobs:
 
       - name: Sync files
         run: |
-          rsync -a --delete \
+          rsync -a --delete-after --ignore-errors \
             ./ /srv/honeypot/service/ \
             --exclude '.git' \
             --exclude '.github' \
