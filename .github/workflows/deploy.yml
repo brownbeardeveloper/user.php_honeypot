@@ -14,7 +14,7 @@ jobs:
       GIT_CONFIG_GLOBAL: /opt/actions-runner/.gitconfig
 
     steps:
-      # 1. Checkout source
+      # 1. Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -22,17 +22,17 @@ jobs:
       - name: Environment info
         run: |
           echo "Runner: $(hostname)"
+          echo "HOME: $HOME"
+          echo "GIT_CONFIG_GLOBAL: $GIT_CONFIG_GLOBAL"
           docker --version
           docker compose version || true
           systemctl --version | head -1
-          echo "HOME is set to $HOME"
 
-      # 3. Build Docker image locally
+      # 3. Build Docker image
       - name: Build image
-        run: |
-          docker build -t honeypot:latest .
+        run: docker build -t honeypot:latest .
 
-      # 4. Sync service files to /srv/honeypot/service
+      # 4. Sync files to honeypot directory
       - name: Sync files
         run: |
           sudo rsync -a --delete \
@@ -42,15 +42,13 @@ jobs:
             --exclude 'README.md'
           sudo chown -R honeypot:honeypot /srv/honeypot/service
 
-      # 5. Restart systemd service
+      # 5. Restart honeypot service
       - name: Restart honeypot service
         run: |
           sudo systemctl restart honeypot
           sleep 3
           sudo systemctl status honeypot --no-pager -l || true
 
-      # 6. Verify active containers
+      # 6. Verify containers
       - name: Verify running containers
-        run: |
-          echo "Active containers:"
-          sudo docker ps
+        run: sudo docker ps
