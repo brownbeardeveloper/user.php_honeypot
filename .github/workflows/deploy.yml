@@ -23,7 +23,6 @@ jobs:
         run: |
           echo "Runner: $(hostname)"
           echo "HOME: $HOME"
-          echo "GIT_CONFIG_GLOBAL: $GIT_CONFIG_GLOBAL"
           docker --version
           docker compose version || true
           systemctl --version | head -1
@@ -35,20 +34,27 @@ jobs:
       # 4. Sync files to honeypot directory
       - name: Sync files
         run: |
-          sudo rsync -a --delete \
+          # sudo rsync -a --delete \
+          rsync -a --delete \
             ./ /srv/honeypot/service/ \
             --exclude '.git' \
             --exclude '.github' \
             --exclude 'README.md'
-          sudo chown -R honeypot:honeypot /srv/honeypot/service
+
+          # sudo chown -R honeypot:honeypot /srv/honeypot/service
+          chown -R honeypot:honeypot /srv/honeypot/service
 
       # 5. Restart honeypot service
       - name: Restart honeypot service
         run: |
-          sudo systemctl restart honeypot
+          # sudo systemctl restart honeypot
+          systemctl restart honeypot
           sleep 3
-          sudo systemctl status honeypot --no-pager -l || true
+          # sudo systemctl status honeypot --no-pager -l || true
+          systemctl status honeypot --no-pager -l || true
 
-      # 6. Verify containers
+      # 6. Verify running containers
       - name: Verify running containers
-        run: sudo docker ps
+        run: |
+          # sudo docker ps
+          docker ps
