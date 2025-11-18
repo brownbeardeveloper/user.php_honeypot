@@ -1,0 +1,7 @@
+# Host-managed files that should not bloat the build context
+docker-compose.yml
+README.md
+service/
+
+# Editor and OS junk
+.DS_Store
