@@ -1,5 +1,5 @@
 <?php
-// Important! This file must be run only in an isolated container
+# IMPORTANT! This file must be run only in an isolated container
 
 date_default_timezone_set('UTC');
 
@@ -32,11 +32,11 @@ function ip_in_any(string $ip, array $cidrs): bool {
     return false;
 }
 
-// Get client IP safely. Trust XFF only if REMOTE_ADDR is a trusted proxy. Returns IP or null.
+# Get client IP
 function get_client_ip(array $trustedProxyCidrs = []): ?string {
     $remote = $_SERVER['REMOTE_ADDR'] ?? null;
     if ($remote && filter_var($remote, FILTER_VALIDATE_IP)) {
-        // If REMOTE_ADDR is a trusted proxy, try XFF/X-Real-IP
+        # If REMOTE_ADDR is a trusted proxy, try XFF/X-Real-IP
         if (!empty($trustedProxyCidrs) && ip_in_any($remote, $trustedProxyCidrs)) {
             if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
                 $parts = array_map('trim', explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']));
@@ -48,28 +48,29 @@ function get_client_ip(array $trustedProxyCidrs = []): ?string {
                 if ($xr && filter_var($xr, FILTER_VALIDATE_IP)) return $xr;
             }
         }
-        // Otherwise return validated REMOTE_ADDR
+        # Otherwise return validated REMOTE_ADDR
         return $remote;
     }
     return null;
 }
 
-// CONFIG: add trusted proxy/load-balancer CIDRs
-$trustedProxyCidrs = ['127.0.0.1/32', '::1/128']; // add nginx/load-balancer CIDRs here
-
-$fb_log = '/var/log/honeypot.log'; // bind-mount this on host: /var/log/honeypot.log
-
+# Add trusted proxy/load-balancer CIDRs
+$trustedProxyCidrs = ['127.0.0.1/32', '::1/128']; # Add nginx/load-balancer CIDRs here
+$fb_log = '/var/log/honeypot/honeypot.log'; # Bind-mount this on host: /var/log/honeypot.log
 $ip = get_client_ip($trustedProxyCidrs);
 $ts = date('Y-m-d H:i:s');
 $uri = $_SERVER['REQUEST_URI'] ?? '/user.php';
 
-// Log only if IP is valid
-if ($ip !== null) {
-    $line = sprintf("%s honeypot: %s uri=\"%s\"\n", $ts, $ip, addslashes($uri));
+# Log only POST requests with username and password
+if ($ip !== null && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
+    $username = $_POST['username'] ?? '';
+    $password = $_POST['password'] ?? '';
+    $line = sprintf("%s honeypot: %s uri=\"%s\" username=\"%s\" password=\"%s\"\n", 
+        $ts, $ip, addslashes($uri), addslashes($username), addslashes($password));
     @file_put_contents($fb_log, $line, FILE_APPEND | LOCK_EX);
 }
 
-// Return a simple fake login form (no auth)
+# Return a simple fake login form
 http_response_code(200);
 $showError = (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST');
 ?>

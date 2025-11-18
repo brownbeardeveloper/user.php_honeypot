@@ -17,7 +17,7 @@ services:
     cap_drop:
       - ALL
     volumes:
-      - ./service/honeypot.log:/var/log/honeypot/honeypot.log:rw
+      - ./service:/var/log/honeypot:rw
     networks:
       - hpnet
       - edge
